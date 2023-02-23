@@ -3,11 +3,11 @@
 using namespace cv;
 using namespace std;
 
-int main(argc, char** argv) {
+int main(int argc, char** argv) {
   
-  Mat img = imread("greyGoat.jpeg", IMREAD_COLOR) // this probably needs to change
+  Mat img = imread("goats.png", IMREAD_COLOR); // this probably needs to change
   
-  imshow("Goat!", img);
+  //imshow("Goat!", img);
 
   int red = 0;
   int green = 0;
@@ -24,8 +24,8 @@ int main(argc, char** argv) {
     }
   }
 
-  imshow("Grayscale goat!", greyMat);
-  imwrite("Grayscalegoat.jpg", greyMay);
+  //imshow("Grayscale goat!", greyMat);
+  imwrite("Grayscalegoat.jpg", greyMat);
   
   waitKey(0);
 
