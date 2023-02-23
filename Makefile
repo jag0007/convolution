@@ -18,7 +18,7 @@ LIBS=-lcudart
 
 .PHONY: clean modules
 
-all: build/lib/libconv.so
+all: build/lib/libconv.so build/bin/conv_test
 
 build/lib/libconv.so: modules conv/src/conv.cu
 	@mkdir -p build/.objects/conv
@@ -33,4 +33,15 @@ build/lib/libconv.so: modules conv/src/conv.cu
 		-Wl,-rpath=$(CUDAPATH)/lib64 -L$(CUDAPATH)/lib64 -lcudart
 	@mkdir -p build/include
 	@ln -sf ../../conv/include/conv.h build/include/conv.h
-	
+
+
+build/bin/conv_test: build/lib/libconv.so conv/test/src/test.cpp
+	@mkdir -p build/bin
+	@cp goats/goats.png build/bin/
+	$(CXX) -Ibuild/include -I$(CUDAPATH)/samples/common/inc \
+		-Iconv/include -Iopencv-install/include -Lopencv-install/lib64 \
+		-o build/bin/conv_test conv/test/src/test.cpp \
+		-Wl,-rpath=$(PWD)/build/lib -Wl,-rpath=$(PWD)/opencv-install/lib64\
+		-Lbuild/lib -L$(CUDAPATH)/lib64 \
+		-lconv -lcudart -lopencv_core -lopencv_imgcodecs \
+		-lopencv_highgui -lopencv_imgproc
