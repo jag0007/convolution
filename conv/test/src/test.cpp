@@ -3,9 +3,9 @@
 using namespace cv;
 using namespace std;
 
-int main(int argc, char** argv) {
-  
-  Mat img = imread("goats.png", IMREAD_COLOR); // this probably needs to change
+Mat getGrayGoat() {
+
+  Mat img = imread("goats/goats.png", IMREAD_COLOR); // this probably needs to change
   
   //imshow("Goat!", img);
 
@@ -24,10 +24,26 @@ int main(int argc, char** argv) {
     }
   }
 
+  return greyMat;
   //imshow("Grayscale goat!", greyMat);
-  imwrite("Grayscalegoat.jpg", greyMat);
+  //imwrite("goats/Grayscalegoat.jpg", greyMat);
   
-  waitKey(0);
+}
+
+int main(int argc, char** argv) {
+ 
+  // load up gray image 
+  Mat img = getGrayGoat();
+  
+  // extract image to vector
+  std::vector<unsigned char> gray(img.rows * img.cols);
+  for (int rowIdx = 0; rowIdx < img.rows; ++rowIdx){
+    for (int colIdx = 0; colIdx < img.cols; ++colIdx) {
+      gray[rowIdx*img.cols + colIdx] = img.at<uchar>(rowIdx, colIdx); 
+    }
+  }  
+
+   
 
   return 0;
 }
