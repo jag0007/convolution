@@ -1,5 +1,8 @@
 #include <cstdio>
 #include <opencv2/opencv.hpp>
+#include <cuda_runtime.h>
+#include <helper_cuda.h>
+#include <conv.h>
 using namespace cv;
 using namespace std;
 
@@ -44,14 +47,14 @@ int main(int argc, char** argv) {
   }
 
   // create column major filter 5x5, fill with all 1s
-  std::vector<unsigned char> filter((RAIUS*2+1) * (RADIUS*2+1), 1);
+  std::vector<unsigned char> filter((RADIUS*2+1) * (RADIUS*2+1), 1);
   
   // make things
   unsigned char * d_gray = nullptr;
   unsigned char * d_blur = nullptr;
   float * d_filter = nullptr;
   size_t imgSize = img.rows * img.cols * sizeof(unsigned char);
-  size_t filterSize = (r*2+1) * (r*2+1) * sizeof(float);
+  size_t filterSize = (RADIUS*2+1) * (RADIUS*2+1) * sizeof(float);
   
   
   // allocate things
@@ -76,7 +79,7 @@ int main(int argc, char** argv) {
   
   
   // make call
-  conv(d_gray, d_filter, d_blur, img.rows, img.cols, r);
+  conv(d_gray, d_filter, d_blur, RADIUS, img.rows, img.cols);
   
   
   // copy back
