@@ -6,6 +6,8 @@
 using namespace cv;
 using namespace std;
 
+#define RADIUS 2
+
 Mat getGrayGoat() {
 
   Mat img = imread("goats/goats.png", IMREAD_COLOR); // this probably needs to change
@@ -100,6 +102,8 @@ int main(int argc, char** argv) {
         blurMat.at<uchar>(rowId, colId) = blur[offset];
       }
   }
+
+  imwrite("outgoat.jpg", blurMat);
   
 
   // free bird
