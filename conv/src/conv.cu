@@ -10,7 +10,7 @@ __global__ void conv_kernel(unsigned char *N, float *F, unsigned char *P, int r,
       int inRow = outRow + frow - r;
       int inCol = outCol + fcol - r;
       if (inRow >= 0 && inRow < height && inCol >= 0 && inCol < width)
-        outPix += N[inRow*width + inCol] * F[frow*(r*2+1) + fcol];  
+        outPix += (unsigned char) ((float) N[inRow*width + inCol] * F[frow*(r*2+1) + fcol]);  
     }
   }
   P[outRow*width + outCol] = outPix;
