@@ -1,6 +1,6 @@
 #include <helper_cuda.h>
 
-__global__ void conv_kernel(float *N, float *F, float *P, int r, int height, int width) {
+__global__ void conv_kernel(unsigned char *N, float *F, unsigned char *P, int r, int height, int width) {
   int outCol=blockIdx.x*blockDim.x + threadIdx.x;
   int outRow=blockIdx.y*blockDim.y + threadIdx.y;
 
@@ -16,7 +16,7 @@ __global__ void conv_kernel(float *N, float *F, float *P, int r, int height, int
   P[outRow*width + outCol] = outPix;
 }
 
-void conv(float *N, float*F, float *P, int r, int height, int width) {
+void conv(unsigned char *N, float *F, unsigned char *P, int r, int height, int width) {
   int blockSizeX = 32;
   int blockSizeY = 32;
   int gridSizeX = (width + blockSizeX -1) / blockSizeX;
