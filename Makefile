@@ -45,3 +45,15 @@ build/bin/conv_test: build/lib/libconv.so conv/test/src/test.cpp
 		-Lbuild/lib -L$(CUDAPATH)/lib64 \
 		-lconv -lcudart -lopencv_core -lopencv_imgcodecs \
 		-lopencv_highgui -lopencv_imgproc
+
+run: build/bin/conv_test
+	@rm -f *.nsys-rep runTestsshGPU.i* runTestsshGPU.o* core.*
+	@echo -ne "gpu\n1\n\n10gb\n1\nampere\conv_test\n" | \
+	run_gpu .runTests.sh > /dev/null
+	@sleep 5
+	@tail -f runTestsshGPU.o*
+
+clean:
+	rm -rf build
+	rm -f *nsys-rep
+	rm -f conv_test.*
