@@ -59,7 +59,9 @@ int main(int argc, char** argv) {
   std::vector<float> filter(filterArea, 1.0/ (float) filterArea);
 
   //auto blur = blurImage(grayValues.data(), filter.data(), img.rows, img.cols, ConvType::CONV);
-  auto blur = blurImage(grayValues.data(), filter.data(), img.rows, img.cols, ConvType::CONVSHARED);
+  //auto blur = blurImage(grayValues.data(), filter.data(), img.rows, img.cols, ConvType::CONVSHARED);
+  auto blur = blurImage(grayValues.data(), filter.data(), img.rows, img.cols, ConvType::CONVCONST);
+
 
   // copy to image
   Mat blurMat(img.rows, img.cols, CV_8UC1, Scalar(0));
@@ -101,16 +103,30 @@ std::vector<unsigned char> blurImage(const unsigned char *img, const float *filt
   checkCudaErrors(
       cudaMemcpy(d_gray, img, imgSize, cudaMemcpyHostToDevice)
   );
-  checkCudaErrors(
-      cudaMemcpy(d_filter, filter, filterSize, cudaMemcpyHostToDevice)
-  );
+
+
+  if (algr == ConvType::CONVCONST) {
+    checkCudaErrors(
+      cudaMemcpyToSymbol(cF, filter, filterSize)
+    );
+  } else {
+    checkCudaErrors(
+        cudaMemcpy(d_filter, filter, filterSize, cudaMemcpyHostToDevice)
+    );
+  }
   
-  
-  // make call
-  //conv(d_gray, d_filter, d_blur, RADIUS, height, width);
-  conv_shared(d_gray, d_filter, d_blur, RADIUS, height, width);
-  
-  
+  switch (algr) {
+    case ConvType::CONV:
+      conv(d_gray, d_filter, d_blur, RADIUS, height, width);
+      break;
+    case ConvType::CONVSHARED:
+      conv_shared(d_gray, d_filter, d_blur, RADIUS, height, width);
+      break;
+    case ConvType::CONVCONST:
+      conv_constant(d_gray, d_filter, d_blur, RADIUS, height, width);
+      break;
+  } 
+ 
   // copy back
   std::vector<unsigned char> blur(height * width, 0);
   checkCudaErrors(
