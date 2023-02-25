@@ -1,3 +1,7 @@
 #ignore build directory
 build/
 opencv-install/
+*.jpg
+*.png
+*.i*
+*.o*
