@@ -1,7 +1,7 @@
 #ifndef __conv_h__
 #define __conv_h__
 
-enum class ConvType() {
+enum class ConvType {
   CONV
 };
 

@@ -7,7 +7,12 @@
 using namespace cv;
 using namespace std;
 
-#define RADIUS 0 
+#define RADIUS 2 
+
+
+Mat getGrayGoat();
+std::vector<unsigned char> blurImage(const unsigned char *img, const float *filter, int height, int width, ConvType algr);
+
 
 Mat getGrayGoat() {
 
@@ -52,12 +57,30 @@ int main(int argc, char** argv) {
   // create column major filter 5x5, fill with all 1s
   int filterArea = (RADIUS*2 + 1) * (RADIUS*2 + 1);
   std::vector<float> filter(filterArea, 1.0/ (float) filterArea);
+
+  auto blur = blurImage(grayValues.data(), filter.data(), img.rows, img.cols, ConvType::CONV);
+
+  // copy to image
+  Mat blurMat(img.rows, img.cols, CV_8UC1, Scalar(0));
+  for (int rowId = 0; rowId < img.rows; ++rowId) {
+      for (int colId = 0; colId < img.cols; ++colId) {
+        int offset = rowId * img.cols + colId;
+        blurMat.at<uchar>(rowId, colId) = blur[offset];
+      }
+  }
+
+  imwrite("outgoat.jpg", blurMat);
   
+
+  return 0;
+}
+
+std::vector<unsigned char> blurImage(const unsigned char *img, const float *filter, int height, int width, ConvType algr) {
   // make things
   unsigned char * d_gray = nullptr;
   unsigned char * d_blur = nullptr;
   float * d_filter = nullptr;
-  size_t imgSize = img.rows * img.cols * sizeof(unsigned char);
+  size_t imgSize = height * width * sizeof(unsigned char);
   size_t filterSize = (RADIUS*2+1) * (RADIUS*2+1) * sizeof(float);
   
   
@@ -75,36 +98,23 @@ int main(int argc, char** argv) {
   
   // load it up
   checkCudaErrors(
-      cudaMemcpy(d_gray, grayValues.data(), imgSize, cudaMemcpyHostToDevice)
+      cudaMemcpy(d_gray, img, imgSize, cudaMemcpyHostToDevice)
   );
   checkCudaErrors(
-      cudaMemcpy(d_filter, filter.data(), filterSize, cudaMemcpyHostToDevice)
+      cudaMemcpy(d_filter, filter, filterSize, cudaMemcpyHostToDevice)
   );
   
   
   // make call
-  conv(d_gray, d_filter, d_blur, RADIUS, img.rows, img.cols);
+  conv(d_gray, d_filter, d_blur, RADIUS, height, width);
   
   
   // copy back
-  std::vector<unsigned char> blur(img.rows * img.cols, 0);
-  
-  
+  std::vector<unsigned char> blur(height * width, 0);
   checkCudaErrors(
       cudaMemcpy(blur.data(), d_blur, imgSize, cudaMemcpyDeviceToHost)
-  );
-  
-  // copy to image
-  Mat blurMat(img.rows, img.cols, CV_8UC1, Scalar(0));
-  for (int rowId = 0; rowId < img.rows; ++rowId) {
-      for (int colId = 0; colId < img.cols; ++colId) {
-        int offset = rowId * img.cols + colId;
-        blurMat.at<uchar>(rowId, colId) = blur[offset];
-      }
-  }
+  ); 
 
-  imwrite("outgoat.jpg", blurMat);
-  
   // free bird
   checkCudaErrors(
       cudaFree(d_gray)
@@ -116,5 +126,5 @@ int main(int argc, char** argv) {
       cudaFree(d_filter)
   );
 
-  return 0;
+  return blur;
 }
