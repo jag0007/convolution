@@ -58,7 +58,8 @@ int main(int argc, char** argv) {
   int filterArea = (RADIUS*2 + 1) * (RADIUS*2 + 1);
   std::vector<float> filter(filterArea, 1.0/ (float) filterArea);
 
-  auto blur = blurImage(grayValues.data(), filter.data(), img.rows, img.cols, ConvType::CONV);
+  //auto blur = blurImage(grayValues.data(), filter.data(), img.rows, img.cols, ConvType::CONV);
+  auto blur = blurImage(grayValues.data(), filter.data(), img.rows, img.cols, ConvType::CONVSHARED);
 
   // copy to image
   Mat blurMat(img.rows, img.cols, CV_8UC1, Scalar(0));
@@ -106,7 +107,8 @@ std::vector<unsigned char> blurImage(const unsigned char *img, const float *filt
   
   
   // make call
-  conv(d_gray, d_filter, d_blur, RADIUS, height, width);
+  //conv(d_gray, d_filter, d_blur, RADIUS, height, width);
+  conv_shared(d_gray, d_filter, d_blur, RADIUS, height, width);
   
   
   // copy back
