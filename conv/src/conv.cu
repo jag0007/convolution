@@ -1,4 +1,5 @@
 #include <helper_cuda.h>
+#include <cstdio>
 
 __global__ void conv_kernel(unsigned char *N, float *F, unsigned char *P, int r, int height, int width) {
   int outCol=blockIdx.x*blockDim.x + threadIdx.x;
@@ -9,11 +10,12 @@ __global__ void conv_kernel(unsigned char *N, float *F, unsigned char *P, int r,
     for (int fcol=0; fcol<2*r+1; fcol++) {
       int inRow = outRow + frow - r;
       int inCol = outCol + fcol - r;
-      if (inRow >= 0 && inRow < height && inCol >= 0 && inCol < width)
-        outPix += (unsigned char) ((float) N[inRow*width + inCol] * F[frow*(r*2+1) + fcol]);  
+      if (inRow >= 0 && inRow < height && inCol >= 0 && inCol < width) 
+        outPix += ((float) N[inRow*width + inCol] * F[frow*(r*2+1) + fcol]);  
     }
   }
-  P[outRow*width + outCol] = outPix;
+  if (outCol >= 0 && outCol < width && outRow >= 0 && outRow < height)
+    P[outRow*width + outCol] = (unsigned char) outPix;
 }
 
 void conv(unsigned char *N, float *F, unsigned char *P, int r, int height, int width) {
