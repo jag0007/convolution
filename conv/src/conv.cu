@@ -111,6 +111,48 @@ __global__ void conv_shared_tile_kernel(unsigned char *N, float *F, unsigned cha
   }
 }
 
+__global__ void conv_const_tile_kernel(unsigned char *N, float *F, unsigned char *P, int r, int height, int width) {
+// assume tileDim == blockDim >= FilterDim  
+
+  extern __shared__ unsigned char k[];
+  //float *F_ds = s;                                // shared filter data
+  unsigned char *N_ds = k;     // shared input data
+
+  // __shared__ F_ds[2*RADIUS+1][2*RADIUS+1];
+  // __shared__ N_ds[TILE_DIM][TILE_DIM];
+
+  int inputDim = blockDim.x;                      // input tile dim
+  int outputDim = inputDim - 2*r;                 // output tile dim
+  int filterDim = 2*r+1;
+
+  int inCol = blockIdx.x*outputDim + threadIdx.x - r;
+  int inRow = blockIdx.y*outputDim + threadIdx.y - r;
+
+  // load input into shared
+  if (inRow >= 0 && inRow < height && inCol >= 0 && inCol < width) {
+    N_ds[threadIdx.y*blockDim.x + threadIdx.x] = N[inRow*width + inCol];
+  } else {
+    N_ds[threadIdx.y*blockDim.x + threadIdx.x] = 0;
+  } 
+  
+  __syncthreads();
+  
+  // do the conv
+  int tileCol = threadIdx.x - r;
+  int tileRow = threadIdx.y - r;
+  if (tileCol >= 0 && tileCol < outputDim && tileRow >= 0 && tileRow < outputDim) {
+    if (inRow >= 0  && inRow < height && inCol >= 0 && inCol < width) {
+      float outPix = 0.0f;
+      for (int frow = 0; frow < filterDim; ++frow) {
+        for (int fcol = 0; fcol < filterDim; ++fcol) {
+            outPix += (float) N_ds[(tileRow+frow)*blockDim.x + tileCol+fcol] * cF[frow * filterDim + fcol];
+        }
+      }
+      P[inRow * width + inCol] = outPix;  
+    }
+  }
+}
+
 void conv(unsigned char *N, float *F, unsigned char *P, int r, int height, int width) {
   int blockSizeX = 32;
   int blockSizeY = 32;
@@ -171,6 +213,23 @@ void conv_shared_tile(unsigned char *N, float *F, unsigned char *P, int r, int h
   int sharedMemorySizeFilter = (2*r+1) * (2*r+1) * sizeof(float);
   int sharedMemorySizeInputData = blockSizeX*blockSizeY * sizeof(unsigned char);
   conv_shared_tile_kernel<<<gridSize, blockSize, sharedMemorySizeFilter + sharedMemorySizeInputData>>>(N, F, P, r, height, width);
+
+  checkCudaErrors(cudaGetLastError());
+  
+}
+
+void conv_const_tile(unsigned char *N, float *F, unsigned char *P, int r, int height, int width) {
+  int blockSizeX = 32;
+  int blockSizeY = 32;
+  int outBlockSize = blockSizeX - 2*r;
+  int gridSizeX = (width + outBlockSize -1) / outBlockSize;
+  int gridSizeY = (height + outBlockSize -1) / outBlockSize;
+
+  dim3 blockSize(blockSizeX, blockSizeY);
+  dim3 gridSize(gridSizeX, gridSizeY);
+
+  int sharedMemorySizeInputData = blockSizeX*blockSizeY * sizeof(unsigned char);
+  conv_const_tile_kernel<<<gridSize, blockSize, sharedMemorySizeInputData>>>(N, F, P, r, height, width);
 
   checkCudaErrors(cudaGetLastError());
   
