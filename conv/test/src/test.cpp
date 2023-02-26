@@ -12,7 +12,10 @@ using namespace std;
 
 Mat getGrayGoat();
 std::vector<unsigned char> blurImage(const unsigned char *img, const float *filter, int height, int width, ConvType algr);
-
+struct tmp {
+  int rows;
+  int cols;
+};
 
 Mat getGrayGoat() {
 
@@ -45,9 +48,11 @@ int main(int argc, char** argv) {
  
   // load up gray image 
    Mat img = getGrayGoat();
-  
+  //tmp img;
+  //img.rows = 5;
+  //img.cols = 5;
   // store gray image in column major format
-  std::vector<unsigned char> grayValues(img.rows*img.cols, 0);
+  std::vector<unsigned char> grayValues(img.rows * img.cols, 1);
   for (int rowId = 0; rowId < img.rows; ++rowId) {
     for (int colId = 0; colId < img.cols; ++colId) {
       grayValues[rowId*img.cols + colId] = img.at<uchar>(rowId, colId);
@@ -60,9 +65,9 @@ int main(int argc, char** argv) {
 
   //auto blur = blurImage(grayValues.data(), filter.data(), img.rows, img.cols, ConvType::CONV);
   //auto blur = blurImage(grayValues.data(), filter.data(), img.rows, img.cols, ConvType::CONVSHARED);
-  auto blur = blurImage(grayValues.data(), filter.data(), img.rows, img.cols, ConvType::CONVCONST);
-
-
+  //auto blur = blurImage(grayValues.data(), filter.data(), img.rows, img.cols, ConvType::CONVCONST);
+  auto blur = blurImage(grayValues.data(), filter.data(), img.rows, img.cols, ConvType::CONVSHAREDTILE);
+  
   // copy to image
   Mat blurMat(img.rows, img.cols, CV_8UC1, Scalar(0));
   for (int rowId = 0; rowId < img.rows; ++rowId) {
@@ -124,6 +129,9 @@ std::vector<unsigned char> blurImage(const unsigned char *img, const float *filt
       break;
     case ConvType::CONVCONST:
       conv_constant(d_gray, d_filter, d_blur, RADIUS, height, width);
+      break;
+    case ConvType::CONVSHAREDTILE:
+      conv_shared_tile(d_gray, d_filter, d_blur, RADIUS, height, width);
       break;
   } 
  
