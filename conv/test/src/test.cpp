@@ -4,6 +4,7 @@
 #include <helper_cuda.h>
 #include <conv.h>
 #include <cstdio>
+#include <Timer.hpp>
 using namespace cv;
 using namespace std;
 
