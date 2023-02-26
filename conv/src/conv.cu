@@ -174,17 +174,33 @@ __global__ void conv_cache_kernel(unsigned char *N, float *F, unsigned char *P, 
 
   float outPix = 0.0f;
   if (Row < height && Col < width) {
-    for (int frow = 0; frow < blockDim.y; ++frow) {
-      for (int fcol = 0; fcol < blockDim.x; ++fcol) {
+    for (int frow = 0; frow < filterDim; ++frow) {
+      for (int fcol = 0; fcol < filterDim; ++fcol) {
         int inRow = threadIdx.y+frow-r;
         int inCol = threadIdx.x+fcol-r;
+        ////if (Row == 0 && Col == 4){
+          ////printf("frow, fcol: (%d,%d) inRow, inCol: (%d,%d)\n", frow, fcol, inRow, inCol);
+        ////}
         if (inRow >=0 && inRow < blockDim.y &&
             inCol >=0 && inCol < blockDim.x) {
+
+              ////if (Row == 0 && Col == 4){
+                ////printf("frow, fcol: (%d,%d) N_ds: %d, cF: %f\n", frow, fcol, N_ds[inRow*blockDim.x + inCol],cF[frow*filterDim + fcol]);
+              ////}
               outPix += (float) N_ds[inRow*blockDim.x + inCol] * cF[frow*filterDim + fcol];
+              ////if (Row == 0 && Col == 4){
+                ////printf("outPix: %f\n", outPix);
+              ////}
         } else {
-          if (inRow >= 0 && inRow < height &&
-              inCol >= 0 && inCol < height) {
-              outPix += (float) N[(Row-r+frow)*width + Col] + cF[frow*filterDim + fcol];
+          if (Row-r+frow >= 0 && Row-r+frow < height &&
+              Col-r+fcol >= 0 && Col-r+fcol < width) {
+              //if (Row == 0 && Col == 4){
+                //printf("frow, fcol: (%d,%d) N: %d, cF: %f\n", frow, fcol, N[(Row-r+frow)*width + Col-r+fcol], cF[frow*filterDim + fcol]);
+              //}
+              outPix += (float) N[(Row-r+frow)*width + Col-r+fcol] * cF[frow*filterDim + fcol];
+              ////if (Row == 0 && Col == 4){
+                ////printf("outPix: %f\n", outPix);
+              ////}
             }
         }
       }
@@ -276,14 +292,14 @@ void conv_const_tile(unsigned char *N, float *F, unsigned char *P, int r, int he
 }
 
 void conv_cache(unsigned char *N, float *F, unsigned char *P, int r, int height, int width) {
-  int blockSizeX = 32;
-  int blockSizeY = 32;
+  int blockSizeX = 2;
+  int blockSizeY = 2;
   int gridSizeX = (width + blockSizeX -1) / blockSizeX;
   int gridSizeY = (height + blockSizeY -1) / blockSizeY;
 
   dim3 blockSize(blockSizeX, blockSizeY);
   dim3 gridSize(gridSizeX, gridSizeY);
-
+  printf("blockSizeX: %d, blockSizeY: %d, gridSizeX: %d, gridSizeY: %d\n",blockSizeX, blockSizeY, gridSizeX, gridSizeY);
   int sharedMemorySizeInputData = blockSizeX*blockSizeY * sizeof(unsigned char);
   conv_cache_kernel<<<gridSize, blockSize, sharedMemorySizeInputData>>>(N, F, P, r, height, width);
 

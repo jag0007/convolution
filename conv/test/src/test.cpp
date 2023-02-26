@@ -70,6 +70,13 @@ int main(int argc, char** argv) {
   //auto blur = blurImage(grayValues.data(), filter.data(), img.rows, img.cols, ConvType::CONVCONSTTILE);
   auto blur = blurImage(grayValues.data(), filter.data(), img.rows, img.cols, ConvType::CONVCACHE);
   
+//  for (int i = 0; i < img.rows; ++i) {
+//    for (int j = 0; j < img.cols; ++j) {
+//      printf("%d ", blur[i*img.cols + j]);
+//    }
+//    printf("\n");
+//  }
+  
   // copy to image
   Mat blurMat(img.rows, img.cols, CV_8UC1, Scalar(0));
   for (int rowId = 0; rowId < img.rows; ++rowId) {
