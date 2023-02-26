@@ -67,7 +67,8 @@ int main(int argc, char** argv) {
   //auto blur = blurImage(grayValues.data(), filter.data(), img.rows, img.cols, ConvType::CONVSHARED);
   //auto blur = blurImage(grayValues.data(), filter.data(), img.rows, img.cols, ConvType::CONVCONST);
   //auto blur = blurImage(grayValues.data(), filter.data(), img.rows, img.cols, ConvType::CONVSHAREDTILE);
-  auto blur = blurImage(grayValues.data(), filter.data(), img.rows, img.cols, ConvType::CONVCONSTTILE);
+  //auto blur = blurImage(grayValues.data(), filter.data(), img.rows, img.cols, ConvType::CONVCONSTTILE);
+  auto blur = blurImage(grayValues.data(), filter.data(), img.rows, img.cols, ConvType::CONVCACHE);
   
   // copy to image
   Mat blurMat(img.rows, img.cols, CV_8UC1, Scalar(0));
@@ -111,7 +112,7 @@ std::vector<unsigned char> blurImage(const unsigned char *img, const float *filt
   );
 
 
-  if (algr == ConvType::CONVCONST || algr == ConvType::CONVCONSTTILE) {
+  if (algr == ConvType::CONVCONST || algr == ConvType::CONVCONSTTILE || algr == ConvType::CONVCACHE) {
     checkCudaErrors(
       cudaMemcpyToSymbol(cF, filter, filterSize)
     );
@@ -136,6 +137,8 @@ std::vector<unsigned char> blurImage(const unsigned char *img, const float *filt
       break;
     case ConvType::CONVCONSTTILE:
       conv_const_tile(d_gray, d_filter, d_blur, RADIUS, height, width);
+    case ConvType::CONVCACHE:
+      conv_cache(d_gray, d_filter, d_blur, RADIUS, height, width);
   } 
  
   // copy back

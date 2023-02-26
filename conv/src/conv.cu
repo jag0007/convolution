@@ -153,6 +153,46 @@ __global__ void conv_const_tile_kernel(unsigned char *N, float *F, unsigned char
   }
 }
 
+__global__ void conv_cache_kernel(unsigned char *N, float *F, unsigned char *P, int r, int height, int width) {
+
+  extern __shared__ unsigned char l[];
+  unsigned char *N_ds = l;
+  
+  int filterDim = 2*r+1; 
+  
+  int Col = blockIdx.x*blockDim.x + threadIdx.x;
+  int Row = blockIdx.y*blockDim.y + threadIdx.y;
+
+   // load input into shared
+  if (Row < height && Col < width) {
+    N_ds[threadIdx.y*blockDim.x + threadIdx.x] = N[Row*width + Col];
+  } else {
+    N_ds[threadIdx.y*blockDim.x + threadIdx.x] = 0;
+  }  
+  
+  __syncthreads();
+
+  float outPix = 0.0f;
+  if (Row < height && Col < width) {
+    for (int frow = 0; frow < blockDim.y; ++frow) {
+      for (int fcol = 0; fcol < blockDim.x; ++fcol) {
+        int inRow = threadIdx.y+frow-r;
+        int inCol = threadIdx.x+fcol-r;
+        if (inRow >=0 && inRow < blockDim.y &&
+            inCol >=0 && inCol < blockDim.x) {
+              outPix += (float) N_ds[inRow*blockDim.x + inCol] * cF[frow*filterDim + fcol];
+        } else {
+          if (inRow >= 0 && inRow < height &&
+              inCol >= 0 && inCol < height) {
+              outPix += (float) N[(Row-r+frow)*width + Col] + cF[frow*filterDim + fcol];
+            }
+        }
+      }
+    }
+    P[Row*width + Col] = (unsigned char) outPix;
+  }
+}
+
 void conv(unsigned char *N, float *F, unsigned char *P, int r, int height, int width) {
   int blockSizeX = 32;
   int blockSizeY = 32;
@@ -234,3 +274,19 @@ void conv_const_tile(unsigned char *N, float *F, unsigned char *P, int r, int he
   checkCudaErrors(cudaGetLastError());
   
 }
+
+void conv_cache(unsigned char *N, float *F, unsigned char *P, int r, int height, int width) {
+  int blockSizeX = 32;
+  int blockSizeY = 32;
+  int gridSizeX = (width + blockSizeX -1) / blockSizeX;
+  int gridSizeY = (height + blockSizeY -1) / blockSizeY;
+
+  dim3 blockSize(blockSizeX, blockSizeY);
+  dim3 gridSize(gridSizeX, gridSizeY);
+
+  int sharedMemorySizeInputData = blockSizeX*blockSizeY * sizeof(unsigned char);
+  conv_cache_kernel<<<gridSize, blockSize, sharedMemorySizeInputData>>>(N, F, P, r, height, width);
+
+  checkCudaErrors(cudaGetLastError());
+
+}  
