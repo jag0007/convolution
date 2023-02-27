@@ -292,14 +292,14 @@ void conv_const_tile(unsigned char *N, float *F, unsigned char *P, int r, int he
 }
 
 void conv_cache(unsigned char *N, float *F, unsigned char *P, int r, int height, int width) {
-  int blockSizeX = 2;
-  int blockSizeY = 2;
+  int blockSizeX = 32;
+  int blockSizeY = 32;
   int gridSizeX = (width + blockSizeX -1) / blockSizeX;
   int gridSizeY = (height + blockSizeY -1) / blockSizeY;
 
   dim3 blockSize(blockSizeX, blockSizeY);
   dim3 gridSize(gridSizeX, gridSizeY);
-  printf("blockSizeX: %d, blockSizeY: %d, gridSizeX: %d, gridSizeY: %d\n",blockSizeX, blockSizeY, gridSizeX, gridSizeY);
+
   int sharedMemorySizeInputData = blockSizeX*blockSizeY * sizeof(unsigned char);
   conv_cache_kernel<<<gridSize, blockSize, sharedMemorySizeInputData>>>(N, F, P, r, height, width);
 
