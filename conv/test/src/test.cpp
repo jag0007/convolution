@@ -145,8 +145,10 @@ std::vector<unsigned char> blurImage(const unsigned char *img, const float *filt
       break;
     case ConvType::CONVCONSTTILE:
       conv_const_tile(d_gray, d_filter, d_blur, RADIUS, height, width);
+      break;
     case ConvType::CONVCACHE:
       conv_cache(d_gray, d_filter, d_blur, RADIUS, height, width);
+      break;
   } 
  
   // copy back
