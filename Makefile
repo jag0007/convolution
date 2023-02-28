@@ -56,7 +56,7 @@ build/bin/conv_test: build/lib/libconv.so conv/test/src/test.cpp
 		-Wl,-rpath=$(PWD)/build/lib -Wl,-rpath=$(PWD)/opencv-install/lib64\
 		-Lbuild/lib -L$(CUDAPATH)/lib64 \
 		-lconv -lcudart -lopencv_core -lopencv_imgcodecs \
-		-lopencv_highgui -lopencv_imgproc
+		-lopencv_highgui -lopencv_imgproc -lTimer
 
 run: build/bin/conv_test
 	@rm -f *.nsys-rep runTestsshGPU.i* runTestsshGPU.o* core.*

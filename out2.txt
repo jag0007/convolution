@@ -1,0 +1,87 @@
+nvcc -pg -std=c++11 -gencode arch=compute_80,code=sm_80 -gencode arch=compute_70,code=sm_70 -Xcompiler -fPIC \
+	-Iconv/include -I/opt/asn/apps/cuda_11.7.0/samples/common/inc \
+	-ITimer/include \
+	-dc -o build/.objects/conv/conv.o \
+	conv/src/conv.cu
+nvcc -pg -std=c++11 -gencode arch=compute_80,code=sm_80 -gencode arch=compute_70,code=sm_70 -Xcompiler -fPIC \
+	-dlink -o build/.objects/conv/conv-dlink.o build/.objects/conv/conv.o
+mkdir -p build/lib
+gcc -shared -o build/lib/libconv.so build/.objects/conv/* \
+	-Wl,-rpath=/opt/asn/apps/cuda_11.7.0/lib64 -L/opt/asn/apps/cuda_11.7.0/lib64 -lcudart
+g++ -Ibuild/include -I/opt/asn/apps/cuda_11.7.0/samples/common/inc \
+	-Iconv/include -Iopencv-install/include -Lopencv-install/lib64 \
+	-o build/bin/conv_test conv/test/src/test.cpp \
+	-Wl,-rpath=/home/uahclsc0008/repos/convolution/build/lib -Wl,-rpath=/home/uahclsc0008/repos/convolution/opencv-install/lib64\
+	-Lbuild/lib -L/opt/asn/apps/cuda_11.7.0/lib64 \
+	-lconv -lcudart -lopencv_core -lopencv_imgcodecs \
+	-lopencv_highgui -lopencv_imgproc -lTimer
+  Constraints: 
+  Using  1  cores on master node  dmc204
+  Node list:  dmc204
+  Nodes:  dmc204
+  Command typed:
+/apps/scripts/run_gpu .runTests.sh     
+  Queue submit command:
+sbatch --qos=gpu -J runTestsshGPU --begin=2023-02-27T20:16:23 --requeue --mail-user=jag0035@uah.edu -o runTestsshGPU.o953001 -t 01:00:00 --gres=gpu:ampere:1 -N 1-1 -n 1 --mem-per-cpu=10000mb  
+ 
+Assigning GPU 2 to this job.
+
+The following have been reloaded with a version change:
+  1) gcc/6.1.0 => gcc/9.3.0
+
+
+
+Waiting for job to start...
+
+==================
+Starting execution
+==================
+
+CONV
+
+Average run time: 0.017397
+	- Computational Rate:         1.0615784299905582e-03 Gflops
+	- Effective Bandwidth:        5.3095906754407764e+05 Gbps
+
+
+CONVSHARED
+
+Average run time: 0.016746
+	- Computational Rate:         1.1027978576735725e+03 Gflops
+	- Effective Bandwidth:        4.4130783209338970e+05 Gbps
+
+
+CONVCONST
+
+Average run time: 0.017240
+	- Computational Rate:         1.0712257113230921e+03 Gflops
+	- Effective Bandwidth:        1.0729396724612093e+05 Gbps
+
+
+CONVSHAREDTILE
+
+Average run time: 0.015836
+	- Computational Rate:         1.1661918211891514e+03 Gflops
+	- Effective Bandwidth:        8.8088022631316733e+02 Gbps
+
+
+CONVCONSTTILE
+
+Average run time: 0.015414
+	- Computational Rate:         1.1981104526192096e+03 Gflops
+	- Effective Bandwidth:        3.9896533122696070e+02 Gbps
+
+
+CONVCACHE
+
+Average run time: 0.025444
+	- Computational Rate:         7.2581923233146858e+02 Gflops
+	- Effective Bandwidth:        2.4169450304433465e+02 Gbps
+
+
+
+==================
+Finished execution
+==================
+
+Hit Ctrl + C to exit...
